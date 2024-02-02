@@ -77,7 +77,7 @@ public abstract class LivingEntityMixin implements LivingEntityAccess {
             return;
         }
 
-        float width = instance.getBbWidth();
+        float width = instance.getBbWidth() / 2;
         Direction direction = localPlayer.getDirection();
 
         double x = instance.getX() + width * (-1 * direction.getStepX());

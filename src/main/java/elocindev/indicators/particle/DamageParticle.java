@@ -139,9 +139,9 @@ public class DamageParticle extends Particle {
             this.fadeout = this.age > (lifetime - length) ? ((float) lifetime - this.age) / length : 1;
 
             this.prevVisualDY = this.visualDY;
-            this.visualDY += this.yd;
+            this.visualDY += (float) this.yd;
             this.prevVisualDX = this.visualDX;
-            this.visualDX += this.xd;
+            this.visualDX += (float) this.xd;
 
             //spawn numbers in a sort of ellipse centered on his torso
             if (Math.sqrt(Mth.square(this.visualDX * 1.5) + Mth.square(this.visualDY - 1)) < 1.9 - 1) {
@@ -156,6 +156,11 @@ public class DamageParticle extends Particle {
     @Override
     public @NotNull ParticleRenderType getRenderType() {
         return ParticleRenderType.CUSTOM;
+    }
+
+    @Override
+    public boolean shouldCull() {
+        return false;
     }
 
     @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
