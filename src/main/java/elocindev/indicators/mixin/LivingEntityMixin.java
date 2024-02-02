@@ -79,10 +79,13 @@ public abstract class LivingEntityMixin implements LivingEntityAccess {
 
         float width = instance.getBbWidth() / 2;
         Direction direction = localPlayer.getDirection();
+        int xDirection = -1 * direction.getStepX();
+        int zDirection = -1 * direction.getStepZ();
+        double offset = instance.getRandom().nextDouble() * 2 - 1;
 
-        double x = instance.getX() + width * (-1 * direction.getStepX());
+        double x = instance.getX() + (width * xDirection) + (xDirection == 0 ? offset : 0);
         double y = instance.getY();
-        double z = instance.getZ() + width * (-1 * direction.getStepZ());
+        double z = instance.getZ() + (width * zDirection) + (zDirection == 0 ? offset : 0);
 
         if (!mmmindicators$particleDisplayedThisTick && mmmindicators$damageTaken > 0) {
             DamageType damageType = DamageType.getType(instance, damageSource);
