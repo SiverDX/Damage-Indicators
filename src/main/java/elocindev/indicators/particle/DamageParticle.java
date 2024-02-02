@@ -3,8 +3,8 @@ package elocindev.indicators.particle;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-
 import elocindev.indicators.MmmIndicators;
+import elocindev.indicators.config.ClientConfig;
 import elocindev.indicators.utils.CritMode;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -20,6 +20,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -32,7 +37,6 @@ import java.util.List;
 //
 // Mmm Indicators uses Dummy's damage number rendering which I personally love.
 public class DamageParticle extends Particle {
-
     private static final List<Float> POSITIONS = new ArrayList<>(Arrays.asList(0f, -0.25f, 0.12f, -0.12f, 0.25f));
     private static final DecimalFormat DF2 = new DecimalFormat("#.##");
     private static final DecimalFormat DF1 = new DecimalFormat("#.#");
@@ -50,12 +54,10 @@ public class DamageParticle extends Particle {
     private float visualDX = 0;
     private float prevVisualDX = 0;
 
-
-    public DamageParticle(ClientLevel clientLevel, double x, double y, double z,
-                                double amount, double dColor, double dz) {
+    public DamageParticle(ClientLevel clientLevel, double x, double y, double z, double amount, double dColor, double dz) {
         super(clientLevel, x, y, z);
         this.lifetime = 35;
-        
+
         this.color = amount < 0 ? 0xff00ff00 : (int) dColor;
         this.darkColor = FastColor.ARGB32.color(255, (int) (this.rCol * 0.25f), (int) (this.rCol * 0.25f), (int) (this.rCol * 0.25));
 
@@ -63,6 +65,7 @@ public class DamageParticle extends Particle {
 
         int index = CritMode.extractIntegerPart(dz);
         float critMult = CritMode.extractFloatPart(dz);
+
         if (critMult == 0) {
             this.text = Component.literal((amount < 0 ? "+" : "") + DF2.format(amount));
         } else {
@@ -73,24 +76,19 @@ public class DamageParticle extends Particle {
     }
 
     @Override
-    public void render(VertexConsumer consumer, Camera camera, float partialTicks) {
-
+    public void render(@NotNull final VertexConsumer consumer, final Camera camera, float partialTicks) {
         Vec3 cameraPos = camera.getPosition();
         float particleX = (float) (Mth.lerp(partialTicks, this.xo, this.x) - cameraPos.x());
         float particleY = (float) (Mth.lerp(partialTicks, this.yo, this.y) - cameraPos.y());
         float particleZ = (float) (Mth.lerp(partialTicks, this.zo, this.z) - cameraPos.z());
 
-
-        int light = MmmIndicators.CONFIG.LIT_UP_NUMBERS ? LightTexture.FULL_BRIGHT : this.getLightColor(partialTicks);
-
+        int light = ClientConfig.LIT_UP_NUMBERS.get() ? LightTexture.FULL_BRIGHT : this.getLightColor(partialTicks);
 
         PoseStack poseStack = new PoseStack();
         poseStack.pushPose();
         poseStack.translate(particleX, particleY, particleZ);
 
-
         double distanceFromCam = new Vec3(particleX, particleY, particleZ).length();
-
         double inc = Mth.clamp(distanceFromCam / 32f, 0, 5f);
 
         // animation
@@ -119,25 +117,20 @@ public class DamageParticle extends Particle {
 
         float x1 = 0.5f - fontRenderer.width(text) / 2f;
 
-        fontRenderer.drawInBatch(text, x1,
-                0, color, false,
-                poseStack.last().pose(), buffer, Font.DisplayMode.NORMAL, 0, light);
+        fontRenderer.drawInBatch(text, x1, 0, color, false, poseStack.last().pose(), buffer, false, 0, light);
         poseStack.translate(1, 1, +0.03);
-        fontRenderer.drawInBatch(text, x1,
-                0, darkColor, false,
-                poseStack.last().pose(), buffer, Font.DisplayMode.NORMAL, 0, light);
+        fontRenderer.drawInBatch(text, x1, 0, darkColor, false, poseStack.last().pose(), buffer, false, 0, light);
 
         buffer.endBatch();
-
         poseStack.popPose();
     }
-
 
     @Override
     public void tick() {
         this.xo = this.x;
         this.yo = this.y;
         this.zo = this.z;
+
         if (this.age++ >= this.lifetime) {
             this.remove();
         } else {
@@ -152,7 +145,6 @@ public class DamageParticle extends Particle {
 
             //spawn numbers in a sort of ellipse centered on his torso
             if (Math.sqrt(Mth.square(this.visualDX * 1.5) + Mth.square(this.visualDY - 1)) < 1.9 - 1) {
-
                 this.yd = this.yd / 2;
             } else {
                 this.yd = 0;
@@ -162,18 +154,22 @@ public class DamageParticle extends Particle {
     }
 
     @Override
-    public ParticleRenderType getRenderType() {
+    public @NotNull ParticleRenderType getRenderType() {
         return ParticleRenderType.CUSTOM;
     }
 
-
+    @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class Factory implements ParticleProvider<SimpleParticleType> {
-        public Factory(SpriteSet spriteSet) {
+        public Factory(final SpriteSet sprite) { /* Nothing to do */ }
+
+        @SubscribeEvent
+        public static void register(final RegisterParticleProvidersEvent event) {
+            event.register(MmmIndicators.DAMAGE_PARTICLE.get(), Factory::new);
         }
 
         @Override
-        public Particle createParticle(SimpleParticleType typeIn, ClientLevel worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-            return new DamageParticle(worldIn, x, y, z, xSpeed, ySpeed, zSpeed);
+        public Particle createParticle(@NotNull final SimpleParticleType type, @NotNull final ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
+            return new DamageParticle(level, x, y, z, xSpeed, ySpeed, zSpeed);
         }
     }
 }

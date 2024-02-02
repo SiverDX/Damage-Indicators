@@ -1,34 +1,34 @@
 package elocindev.indicators;
 
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
-import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
-import net.minecraft.core.Registry;
+import elocindev.indicators.config.ClientConfig;
+import elocindev.indicators.network.NetworkHandler;
+import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+@Mod(MmmIndicators.MODID)
+@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+public class MmmIndicators {
+    public static final String MODID = "mmmindicators";
 
-import elocindev.indicators.config.MmmIndicatorsConfig;
-import elocindev.indicators.particle.DamageParticle;
-import elocindev.necronomicon.api.config.v1.NecConfigAPI;
+    public static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(ForgeRegistries.PARTICLE_TYPES, MODID);
+    public static final RegistryObject<SimpleParticleType> DAMAGE_PARTICLE = PARTICLES.register("damage", () -> new SimpleParticleType(false));
 
-public class MmmIndicators implements ClientModInitializer {
-	public static final String MODID = "mmmindicators";
-    public static final Logger LOGGER = LoggerFactory.getLogger(MODID);
+    public MmmIndicators() {
+        PARTICLES.register(FMLJavaModLoadingContext.get().getModEventBus());
+        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
+    }
 
-	public static MmmIndicatorsConfig CONFIG;
-
-	public static final SimpleParticleType DAMAGE_PARTICLE = FabricParticleTypes.simple(true);
-
-	@Override
-	public void onInitializeClient() {
-		NecConfigAPI.registerConfig(MmmIndicatorsConfig.class);
-		CONFIG = MmmIndicatorsConfig.INSTANCE;
-
-		Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation(MODID, "damage"), DAMAGE_PARTICLE);
-		ParticleFactoryRegistry.getInstance().register(DAMAGE_PARTICLE, DamageParticle.Factory::new);
-	}
+    @SubscribeEvent
+    public static void handleCommon(final FMLCommonSetupEvent event) {
+        event.enqueueWork(NetworkHandler::register);
+    }
 }

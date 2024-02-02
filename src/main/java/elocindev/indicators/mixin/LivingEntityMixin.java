@@ -1,66 +1,101 @@
 package elocindev.indicators.mixin;
 
+import elocindev.indicators.MmmIndicators;
+import elocindev.indicators.config.ClientConfig;
+import elocindev.indicators.core.LivingEntityAccess;
+import elocindev.indicators.utils.DamageType;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.Direction;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import elocindev.indicators.MmmIndicators;
-import elocindev.indicators.utils.ParticleUtils;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.entity.LivingEntity;
-
 @Mixin(LivingEntity.class)
-public class LivingEntityMixin {
-    private float lastHealth = 0;
-    private float damageTaken = 0;
-    private boolean particleDisplayedThisTick = false;
+public abstract class LivingEntityMixin implements LivingEntityAccess {
+    @Unique
+    private float mmmindicators$lastHealth;
+    @Unique
+    private float mmmindicators$damageTaken;
+    @Unique
+    private int mmmindicators$damageType;
+    @Unique
+    private boolean mmmindicators$particleDisplayedThisTick;
+
+    @Override
+    public void mmmIndicators$setDamageType(int damageType) {
+        this.mmmindicators$damageType = damageType;
+    }
+
+    @Override
+    public int mmmIndicators$getDamageType() {
+        return mmmindicators$damageType;
+    }
 
     @Inject(method = "tick", at = @At("HEAD"))
-    public void onTick(CallbackInfo ci) {
-        LivingEntity inst = (LivingEntity) (Object) this;
-        if (!inst.level().isClientSide()) return;
+    public void onTick(final CallbackInfo callback) {
+        LivingEntity instance = (LivingEntity) (Object) this;
 
-        if (particleDisplayedThisTick) {
-            particleDisplayedThisTick = false;
+        if (!instance.getLevel().isClientSide()) {
+            return;
         }
 
-        LivingEntity entity = (LivingEntity) (Object) this;
-        float currentHealth = entity.getHealth();
-
-        if (lastHealth > currentHealth && !particleDisplayedThisTick) {
-            damageTaken = lastHealth - currentHealth;
+        if (mmmindicators$particleDisplayedThisTick) {
+            mmmindicators$particleDisplayedThisTick = false;
         }
 
-        lastHealth = currentHealth;
+        float currentHealth = instance.getHealth();
+
+        if (mmmindicators$lastHealth > currentHealth && !mmmindicators$particleDisplayedThisTick) {
+            mmmindicators$damageTaken = mmmindicators$lastHealth - currentHealth;
+        }
+
+        mmmindicators$lastHealth = currentHealth;
     }
 
     @Inject(method = "tick", at = @At("TAIL"))
-    public void afterTick(CallbackInfo ci) {
-        LivingEntity inst = (LivingEntity) (Object) this;
-        if (!inst.level().isClientSide()) return;
+    public void afterTick(final CallbackInfo callback) {
+        LivingEntity instance = (LivingEntity) (Object) this;
 
-        if (!MmmIndicators.CONFIG.ALWAYS_DISPLAY && inst.getLastDamageSource() != null && !(inst.getLastDamageSource().getEntity() instanceof LocalPlayer)) return;
-        
-        // Check later the spell engine compat
-        //if (inst.getLastDamageSource().type()) 
+        if (!instance.getLevel().isClientSide()) {
+            return;
+        }
 
-        double x = inst.getX(); double y = inst.getY(); double z = inst.getZ();
+        DamageSource damageSource = instance.getLastDamageSource();
+        LocalPlayer localPlayer = Minecraft.getInstance().player;
 
-        if (!particleDisplayedThisTick && damageTaken > 0) {
-            int color = ParticleUtils.getColorForDamageAmount(damageTaken);
-            Minecraft client = Minecraft.getInstance();
+        if (localPlayer == null) {
+            return;
+        }
 
-            client.level.addParticle(
-                MmmIndicators.DAMAGE_PARTICLE,
-                x,
-                y,
-                z,
-                damageTaken,
-                color,
-                0
-            ); damageTaken = 0; particleDisplayedThisTick = true;
+        if (ClientConfig.ALWAYS_DISPLAY.get() && (damageSource == null || damageSource.getEntity() != localPlayer)) {
+            return;
+        }
+
+        float width = instance.getBbWidth();
+        Direction direction = localPlayer.getDirection();
+
+        double x = instance.getX() + width * (-1 * direction.getStepX());
+        double y = instance.getY();
+        double z = instance.getZ() + width * (-1 * direction.getStepZ());
+
+        if (!mmmindicators$particleDisplayedThisTick && mmmindicators$damageTaken > 0) {
+            DamageType damageType = DamageType.getType(instance, damageSource);
+
+            /* Mob effect is not synced to the client
+            if (damageType == DamageType.MAGIC && mmmindicators$damageTaken == 1 && instance.hasEffect(MobEffects.POISON)) {
+                damageType = DamageType.POISON;
+            }
+            */
+
+            instance.getLevel().addParticle(MmmIndicators.DAMAGE_PARTICLE.get(), x, y, z, mmmindicators$damageTaken, DamageType.getColor(damageType), 0);
+            mmmindicators$damageTaken = 0;
+            mmmindicators$particleDisplayedThisTick = true;
         }
     }
 }
