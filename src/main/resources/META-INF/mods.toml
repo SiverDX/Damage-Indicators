@@ -3,7 +3,7 @@ loaderVersion = "[43,)"
 license="${mod_license}"
 
 [[mods]]
-modId = "mmmindicators"
+modId = "damage_indicators"
 displayTest="IGNORE_ALL_VERSION"
 version = "${mod_version}"
 displayName = "${mod_name}"

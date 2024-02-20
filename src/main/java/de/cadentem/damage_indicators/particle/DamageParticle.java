@@ -1,11 +1,11 @@
-package elocindev.indicators.particle;
+package de.cadentem.damage_indicators.particle;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import elocindev.indicators.MmmIndicators;
-import elocindev.indicators.config.ClientConfig;
-import elocindev.indicators.utils.CritMode;
+import de.cadentem.damage_indicators.registry.DIParticles;
+import de.cadentem.damage_indicators.config.ClientConfig;
+import de.cadentem.damage_indicators.utils.DamageType;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -15,10 +15,10 @@ import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
@@ -27,19 +27,10 @@ import net.minecraftforge.fml.common.Mod;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
-// Credits https://github.com/MehVahdJukaar
-// This class is from the Target Dummy mod
-// https://github.com/MehVahdJukaar/DuMmmMmmy/blob/1.20/common/src/main/java/net/mehvahdjukaar/dummmmmmy/client/DamageNumberParticle.java
-//
-// Mmm Indicators uses Dummy's damage number rendering which I personally love.
 public class DamageParticle extends Particle {
-    private static final List<Float> POSITIONS = new ArrayList<>(Arrays.asList(0f, -0.25f, 0.12f, -0.12f, 0.25f));
+    private static final RandomSource RANDOM = RandomSource.create();
     private static final DecimalFormat DF2 = new DecimalFormat("#.##");
-    private static final DecimalFormat DF1 = new DecimalFormat("#.#");
 
     private final Font fontRenderer = Minecraft.getInstance().font;
 
@@ -54,25 +45,28 @@ public class DamageParticle extends Particle {
     private float visualDX = 0;
     private float prevVisualDX = 0;
 
-    public DamageParticle(ClientLevel clientLevel, double x, double y, double z, double amount, double dColor, double dz) {
-        super(clientLevel, x, y, z);
+    public DamageParticle(ClientLevel clientLevel, double x, double y, double z, float damage, float initialDamage, int damageType, boolean isCrit, double critMultiplier) {
+        super(clientLevel, x, y + RANDOM.nextDouble() / 2 - 0.25, z);
         this.lifetime = 35;
 
-        this.color = amount < 0 ? 0xff00ff00 : (int) dColor;
+        this.color = damage < 0 ? 0xff00ff00 : DamageType.getColor(DamageType.get(damageType));
         this.darkColor = FastColor.ARGB32.color(255, (int) (this.rCol * 0.25f), (int) (this.rCol * 0.25f), (int) (this.rCol * 0.25));
-
         this.yd = 1;
 
-        int index = CritMode.extractIntegerPart(dz);
-        float critMult = CritMode.extractFloatPart(dz);
+        float difference = initialDamage - damage;
+        String differenceText = "";
 
-        if (critMult == 0) {
-            this.text = Component.literal((amount < 0 ? "+" : "") + DF2.format(amount));
-        } else {
-            this.text = Component.translatable("message.mmmindicators.crit", DF1.format(amount), DF1.format(critMult));
+        if (difference > 0) {
+            differenceText = " (" + DF2.format(difference) + " RES)";
         }
 
-        this.xd = POSITIONS.get((index % POSITIONS.size()));
+        String critText = "";
+
+        if (isCrit) {
+            critText = " (" + DF2.format(critMultiplier) + "x)";
+        }
+
+        text = Component.literal((damage < 0 ? "+" : "") + DF2.format(damage) + critText + differenceText);
     }
 
     @Override
@@ -164,17 +158,17 @@ public class DamageParticle extends Particle {
     }
 
     @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
-    public static class Factory implements ParticleProvider<SimpleParticleType> {
+    public static class Factory implements ParticleProvider<DamageParticleType> {
         public Factory(final SpriteSet sprite) { /* Nothing to do */ }
 
         @SubscribeEvent
         public static void register(final RegisterParticleProvidersEvent event) {
-            event.register(MmmIndicators.DAMAGE_PARTICLE.get(), Factory::new);
+            event.register(DIParticles.DAMAGE_PARTICLE.get(), Factory::new);
         }
 
         @Override
-        public Particle createParticle(@NotNull final SimpleParticleType type, @NotNull final ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-            return new DamageParticle(level, x, y, z, xSpeed, ySpeed, zSpeed);
+        public Particle createParticle(@NotNull final DamageParticleType type, @NotNull final ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
+            return new DamageParticle(level, x, y, z, type.damage(), type.initialDamage(), type.damageType(), type.isCritical(), type.critMultiplier());
         }
     }
 }
