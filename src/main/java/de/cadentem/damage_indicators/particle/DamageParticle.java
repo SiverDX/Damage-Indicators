@@ -31,7 +31,7 @@ import java.text.DecimalFormat;
 
 public class DamageParticle extends Particle {
     private static final RandomSource RANDOM = RandomSource.create();
-    private static final DecimalFormat DF2 = new DecimalFormat("#.##");
+    private static final DecimalFormat FORMAT = new DecimalFormat("#.#");
 
     private final Font fontRenderer = Minecraft.getInstance().font;
 
@@ -58,16 +58,16 @@ public class DamageParticle extends Particle {
         String differenceText = "";
 
         if (difference > 0) {
-            differenceText = " (" + DF2.format(difference) + " RES)";
+            differenceText = " (" + FORMAT.format(difference) + " RES)";
         }
 
         String critText = "";
 
         if (isCrit) {
-            critText = " (" + DF2.format(critMultiplier) + "x)";
+            critText = " (" + FORMAT.format(critMultiplier) + "x)";
         }
 
-        text = Component.literal((damage < 0 ? "+" : "") + DF2.format(damage) + critText + differenceText);
+        text = Component.literal((damage < 0 ? "+" : "") + FORMAT.format(damage) + critText + differenceText);
     }
 
     @Override
