@@ -1,10 +1,11 @@
 package de.cadentem.damage_indicators.particle;
 
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import de.cadentem.damage_indicators.registry.DIParticles;
 import de.cadentem.damage_indicators.config.ClientConfig;
+import de.cadentem.damage_indicators.registry.DIParticles;
 import de.cadentem.damage_indicators.utils.DamageType;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -107,7 +108,7 @@ public class DamageParticle extends Particle {
 
         RenderSystem.enableDepthTest();
         RenderSystem.enableBlend();
-        RenderSystem.blendFuncSeparate(770, 771, 1, 0);
+        RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
 
         float x1 = 0.5f - fontRenderer.width(text) / 2f;
 

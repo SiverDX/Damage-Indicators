@@ -10,8 +10,7 @@ import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
-public record SyncParticle(float damage, float initialDamage, boolean isCritical, float critMultiplier, int color,
-                           double x, double y, double z, double width) {
+public record SyncParticle(float damage, float initialDamage, boolean isCritical, float critMultiplier, int color, double x, double y, double z, double width) {
     public void encode(final FriendlyByteBuf buffer) {
         buffer.writeFloat(damage);
         buffer.writeFloat(initialDamage);
@@ -25,7 +24,17 @@ public record SyncParticle(float damage, float initialDamage, boolean isCritical
     }
 
     public static SyncParticle decode(final FriendlyByteBuf buffer) {
-        return new SyncParticle(buffer.readFloat(), buffer.readFloat(), buffer.readBoolean(), buffer.readFloat(), buffer.readInt(), buffer.readDouble(), buffer.readDouble(), buffer.readDouble(), buffer.readDouble());
+        return new SyncParticle(
+                buffer.readFloat(),
+                buffer.readFloat(),
+                buffer.readBoolean(),
+                buffer.readFloat(),
+                buffer.readInt(),
+                buffer.readDouble(),
+                buffer.readDouble(),
+                buffer.readDouble(),
+                buffer.readDouble()
+        );
     }
 
     public static void handle(final SyncParticle message, final Supplier<NetworkEvent.Context> supplier) {
