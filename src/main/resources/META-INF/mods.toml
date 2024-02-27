@@ -13,14 +13,14 @@ ${mod_description}
 '''
 itemIcon = "minecraft:iron_sword"
 
-[[dependencies.mmmindicators]]
+[[dependencies.damage_indicators]]
 modId = "forge"
 mandatory = true
 versionRange = "[43,)"
 ordering = "NONE"
 side = "BOTH"
 
-[[dependencies.mmmindicators]]
+[[dependencies.damage_indicators]]
 modId = "minecraft"
 mandatory = true
 versionRange = "[1.19.2,)"
