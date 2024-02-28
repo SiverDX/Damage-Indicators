@@ -32,6 +32,10 @@ import java.text.DecimalFormat;
 public class DamageParticle extends Particle {
     private static final RandomSource RANDOM = RandomSource.create();
     private static final DecimalFormat FORMAT = new DecimalFormat("#.#");
+    private static final String NO_RESIST = "";
+    private static final String HIGH_RESIST = "︾";
+    private static final String LOW_RESIST = "﹀";
+    private static final String FULL_RESIST = "✖";
 
     private final Font fontRenderer = Minecraft.getInstance().font;
 
@@ -46,19 +50,24 @@ public class DamageParticle extends Particle {
     private float visualDX = 0;
     private float prevVisualDX = 0;
 
-    public DamageParticle(ClientLevel clientLevel, double x, double y, double z, float damage, float initialDamage, int damageType, boolean isCrit, double critMultiplier) {
-        super(clientLevel, x, y + RANDOM.nextDouble() / 2 - 0.25, z);
-        this.lifetime = 35;
-
-        this.color = damage < 0 ? 0xff00ff00 : DamageType.getColor(DamageType.get(damageType));
+    public DamageParticle(final ClientLevel level, double x, double y, double z, float damage, float initialDamage, int damageType, boolean isCrit, double critMultiplier) {
+        super(level, x, y + RANDOM.nextDouble() / 2 - 0.25, z);
         this.darkColor = FastColor.ARGB32.color(255, (int) (this.rCol * 0.25f), (int) (this.rCol * 0.25f), (int) (this.rCol * 0.25));
+        this.color = damage < 0 ? 0xff00ff00 : DamageType.getColor(DamageType.get(damageType));
+        this.lifetime = 35;
         this.yd = 1;
 
-        float difference = initialDamage - damage;
-        String differenceText = "";
+        float damagePercentage = 100 / initialDamage * damage;
+        String differenceText;
 
-        if (difference > 0) {
-            differenceText = " (" + FORMAT.format(difference) + " RES)";
+        if (damagePercentage >= 95) {
+            differenceText = NO_RESIST;
+        } else if (damagePercentage >= 60) {
+            differenceText = LOW_RESIST;
+        } else if (damagePercentage >= 1) {
+            differenceText = HIGH_RESIST;
+        } else {
+            differenceText = FULL_RESIST;
         }
 
         String critText = "";
