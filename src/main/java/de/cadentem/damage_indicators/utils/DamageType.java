@@ -12,7 +12,12 @@ public enum DamageType {
     MAGIC,
     LIGHTNING,
     POISON,
-    WITHER;
+    WITHER,
+    BLOOD,
+    HOLY,
+    ENDER,
+    ELDRITCH,
+    ICE;
 
     public static DamageType get(int ordinal) {
         if (ordinal < 0 || ordinal >= values().length) {
@@ -27,13 +32,25 @@ public enum DamageType {
             return NONE;
         }
 
-        if (damageSource.getMsgId().contains("poison")) {
+        String type = damageSource.getMsgId();
+
+        if (type.contains("poison") || type.contains("nature")) {
             return POISON;
-        } else if (damageSource == DamageSource.WITHER || damageSource.getMsgId().contains("wither")) {
+        } else if (type.contains("blood")) {
+            return BLOOD;
+        } else if (type.contains("holy")) {
+            return HOLY;
+        } else if (type.contains("ender")) {
+            return ENDER;
+        } else if (type.contains("eldritch")) {
+            return ELDRITCH;
+        } else if (type.contains("ice") || type.contains("frost")) {
+            return ICE;
+        } else if (damageSource == DamageSource.WITHER || type.contains("wither")) {
             return WITHER;
-        } else if (damageSource == DamageSource.LIGHTNING_BOLT || damageSource.getMsgId().contains("lightning")) {
+        } else if (damageSource == DamageSource.LIGHTNING_BOLT || type.contains("lightning")) {
             return LIGHTNING;
-        } else if (damageSource.isFire()) {
+        } else if (damageSource.isFire() || type.contains("fire")) {
             return FIRE;
         } else if (damageSource.isMagic()) {
             return MAGIC;
@@ -57,7 +74,12 @@ public enum DamageType {
             case MAGIC -> ChatFormatting.BLUE.getColor();
             case LIGHTNING -> ChatFormatting.AQUA.getColor();
             case POISON -> ChatFormatting.DARK_GREEN.getColor();
-            case WITHER -> ChatFormatting.DARK_PURPLE.getColor();
+            case WITHER -> 0x1e1e1e;
+            case BLOOD -> ChatFormatting.DARK_RED.getColor();
+            case HOLY -> /* Iron's Spells 'n Spellbooks (Holy) */ 0xfff8d4;
+            case ENDER -> ChatFormatting.DARK_PURPLE.getColor();
+            case ELDRITCH -> /* Iron's Spells 'n Spellbooks (Eldritch) */ 0x0f839c;
+            case ICE -> /* Iron's Spells 'n Spellbooks (Ice) */ 0xd0f9ff;
         };
     }
 }

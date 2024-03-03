@@ -33,8 +33,8 @@ public class DamageParticle extends Particle {
     private static final RandomSource RANDOM = RandomSource.create();
     private static final DecimalFormat FORMAT = new DecimalFormat("#.#");
     private static final String NO_RESIST = "";
-    private static final String HIGH_RESIST = "︾";
     private static final String LOW_RESIST = "﹀";
+    private static final String HIGH_RESIST = "︾";
     private static final String FULL_RESIST = "✖";
 
     private final Font fontRenderer = Minecraft.getInstance().font;
@@ -60,11 +60,11 @@ public class DamageParticle extends Particle {
         float damagePercentage = 100 / initialDamage * damage;
         String differenceText;
 
-        if (damagePercentage >= 95) {
+        if (damagePercentage >= 90) {
             differenceText = NO_RESIST;
         } else if (damagePercentage >= 60) {
             differenceText = LOW_RESIST;
-        } else if (damagePercentage >= 1) {
+        } else if (damagePercentage >= 5) {
             differenceText = HIGH_RESIST;
         } else {
             differenceText = FULL_RESIST;

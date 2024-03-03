@@ -1,8 +1,8 @@
 package de.cadentem.damage_indicators.core;
 
 import com.mojang.datafixers.util.Pair;
-import de.cadentem.damage_indicators.network.SyncParticle;
 import de.cadentem.damage_indicators.network.NetworkHandler;
+import de.cadentem.damage_indicators.network.SyncParticle;
 import de.cadentem.damage_indicators.utils.DamageType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
@@ -21,10 +21,6 @@ public class ServerHandler {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void syncDamageType(final LivingAttackEvent event) {
-        if (event.isCanceled() || event.getEntity().getLevel().isClientSide()) {
-            return;
-        }
-
         initialDamage.set(event.getAmount());
     }
 
